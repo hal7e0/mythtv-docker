@@ -40,13 +40,19 @@ jobs:
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Get date string for tag
-        id: datestr
+      - name: Determine build metadata
+        id: metadata
         shell: bash
         run: |
+          printf 'ubuntuVersion=' >> $GITHUB_OUTPUT
+          if [[ "${{ matrix.version }}" == "33" ]]; then
+            printf 'jammy\n' >> $GITHUB_OUTPUT
+          else
+            printf 'noble\n' >> $GITHUB_OUTPUT
+          fi
           printf 'date=' >> $GITHUB_OUTPUT
           date +%Y%m%d >> $GITHUB_OUTPUT
-          echo $GITHUB_OUTPUT
+          cat $GITHUB_OUTPUT
 
       - name: Login to ghcr.io
         uses: docker/login-action@v3
@@ -59,8 +65,10 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.component }}
-          build-args: MYTHTV_VERSION=${{ matrix.version }}
+          build-args: |
+            MYTHTV_VERSION=${{ matrix.version }}
+            UBUNTU_VERSION=${{ steps.metadata.outputs.ubuntuVersion }}
           tags: |
             ghcr.io/hal7e0/myth${{ matrix.component }}:${{ matrix.version }}
-            ghcr.io/hal7e0/myth${{ matrix.component }}:${{ matrix.version }}-${{ steps.datestr.outputs.date }}
+            ghcr.io/hal7e0/myth${{ matrix.component }}:${{ matrix.version }}-${{ steps.metadata.outputs.date }}
           push: ${{ github.ref == 'refs/heads/main' }}

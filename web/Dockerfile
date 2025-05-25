@@ -1,7 +1,9 @@
 # vim: set ft=dockerfile :
-FROM ubuntu:24.04
+ARG UBUNTU_VERSION=noble
+FROM ubuntu:${UBUNTU_VERSION}
 
 ARG MYTHTV_VERSION=34
+ARG UBUNTU_VERSION=noble
 
 RUN apt-get update && apt-get dist-upgrade -y && apt-get install -y ca-certificates lsb-release &&\
 	rm -rf /var/lib/apt/lists/*
@@ -10,7 +12,7 @@ ADD https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x60af0ee633670609 /us
 RUN cat > /etc/apt/sources.list.d/mythbuntu-${MYTHTV_VERSION}-ppa.sources <<EOF
 Types: deb
 URIs: https://ppa.launchpadcontent.net/mythbuntu/${MYTHTV_VERSION}/ubuntu/
-Suites: noble
+Suites: ${UBUNTU_VERSION}
 Components: main
 Signed-By:
 $(sed 's/^/ /' /usr/share/keyrings/mythbuntu-ppa.asc)

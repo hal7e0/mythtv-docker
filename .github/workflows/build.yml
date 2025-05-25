@@ -1,7 +1,16 @@
 name: Build MythTV containers
 on:
   push:
+    branches:
+      - main
+    paths-ignore:
+      - '**/README.md'
   workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: '05 10 * * 0' # 10:05am UTC every Sunday
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}

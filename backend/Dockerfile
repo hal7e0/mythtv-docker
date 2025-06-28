@@ -25,7 +25,7 @@ Pin: release o=LP-PPA-mythbuntu-${MYTHTV_VERSION}
 Pin-Priority: 550
 EOF
 
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y mythtv-backend mythtv-database &&\
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y mythtv-backend mythtv-database xmltv &&\
 	rm -rf /var/lib/apt/lists/*
 
 EXPOSE 6544/tcp

@@ -35,5 +35,5 @@ EXPOSE 6554/tcp
 EXPOSE 6744/tcp
 EXPOSE 1900/udp
 
-USER mythtv:39
+USER mythtv:mythtv
 CMD mythbackend

@@ -2,7 +2,7 @@
 ARG UBUNTU_VERSION=noble
 FROM ubuntu:${UBUNTU_VERSION}
 
-RUN groupadd -rg 128 mythtv && useradd -ru 120 -md /home/mythtv -g mythtv mythtv && usermod -aG 39 mythtv
+RUN groupadd -rg 128 mythtv && useradd -ru 120 -md /home/mythtv -g mythtv mythtv
 ARG MYTHTV_VERSION=34
 ARG UBUNTU_VERSION=noble
 
@@ -35,5 +35,5 @@ EXPOSE 6554/tcp
 EXPOSE 6744/tcp
 EXPOSE 1900/udp
 
-USER mythtv:39
+USER mythtv:mythtv
 CMD mythbackend

@@ -1,0 +1,84 @@
+container_runtime := env("CONTAINER_RUNTIME", `command -v docker >/dev/null 2>&1 && echo docker || echo podman`)
+registry := "ghcr.io"
+registry_path := "hal7e0"
+myth_versions := "33 34 35"
+images := "backend frontend"
+
+[private]
+default:
+    @just --list
+
+image-needs-updates: $image $version
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    IMAGE_REF="{{ registry }}/{{ registry_path }}/myth$image:$version"
+
+    echo "Pulling latest image for '$IMAGE_REF'..."
+    {{ container_runtime }} pull "$IMAGE_REF"
+
+    echo "Checking image for outdated packages..."
+    APT_STATUS="$({{ container_runtime }} run -itu root --rm --entrypoint /usr/bin/apt "$IMAGE_REF" update | tail -n 1)"
+
+
+    if [[ "$APT_STATUS" == All* ]]; then
+        echo "Image '$IMAGE_REF' up to date."
+        exit 1
+    else
+        PKGS_NEEDING_UPDATE="$(printf '%s' "$APT_STATUS" | awk '{print $1}')"
+        echo "Image '$IMAGE_REF' needs $PKGS_NEEDING_UPDATE updates."
+        exit 0
+    fi
+
+build-image: $image $version $timestamp
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    TAG_FULL="$version-$timestamp"
+    IMAGE_REF="{{ registry }}/{{ registry_path }}/myth$image:$TAG_FULL"
+
+    BUILD_ARGS=(--build-arg "MYTHTV_VERSION=$version")
+
+    if [[ "$version" == "33" ]]; then
+        BUILD_ARGS+=(--build-arg "UBUNTU_VERSION=jammy")
+    else
+        BUILD_ARGS+=(--build-arg "UBUNTU_VERSION=noble")
+    fi
+
+    {{ container_runtime }} build "$BUILD_ARGS" -f "$image/Dockerfile" -t "$IMAGE_REF" "$image"
+    {{ container_runtime }} tag "$IMAGE_REF" "{{ registry }}/myth$image:$version"
+
+push-image: $image $version $timestamp
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "$REGISTRY_PASSWORD" | {{ container_runtime }} login "{{ registry }}" -u "$REGISTRY_USERNAME" --password-stdin
+
+    IMAGE_REPO="{{ registry }}/{{ registry_path }}/myth$image"
+    {{ container_runtime }} push "${IMAGE_REPO}:${version}-${timestamp}"
+    {{ container_runtime }} push "${IMAGE_REPO}:${version}"
+
+rebuild-image: $image $version $timestamp
+    #!/usr/bin/env bash
+
+    if just image-needs-updates "$image" "$version"; then
+        just build-image "$image" "$version" "$timestamp"
+        just push-image "$image" "$version" "$timestamp"
+    fi
+
+rebuild-all:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    VERSIONS=({{ myth_versions }})
+    TIMESTAMP="$(date +%Y%m%d)"
+
+    for VERSION in "${VERSIONS[@]}"; do
+        IMAGES=({{ images }})
+        if [[ $VERSION -lt 35 ]]; then
+            IMAGES+=(web)
+        fi
+
+        for IMAGE in "${IMAGES[@]}"; do
+            just rebuild-image "$IMAGE" "$VERSION" "$TIMESTAMP"
+        done
+    done

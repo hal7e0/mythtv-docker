@@ -23,7 +23,7 @@ build-image $image $version $timestamp:
         BUILD_ARGS+=(--build-arg "UBUNTU_VERSION=noble")
     fi
 
-    {{ container_runtime }} build "$BUILD_ARGS" -f "$image/Dockerfile" -t "$IMAGE_REF" "$image"
+    {{ container_runtime }} build "${BUILD_ARGS[@]}" -f "$image/Dockerfile" -t "$IMAGE_REF" "$image"
     {{ container_runtime }} tag "$IMAGE_REF" "{{ registry }}/myth$image:$version"
 
 push-image $image $version $timestamp:

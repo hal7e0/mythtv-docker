@@ -51,7 +51,10 @@ build-image: $image $version $timestamp
 push-image: $image $version $timestamp
     #!/usr/bin/env bash
     set -euo pipefail
-    echo "$REGISTRY_PASSWORD" | {{ container_runtime }} login "{{ registry }}" -u "$REGISTRY_USERNAME" --password-stdin
+
+    if ! {{ container_runtime }} login --get-login "{{ registry }}"; then
+        echo "$REGISTRY_PASSWORD" | {{ container_runtime }} login "{{ registry }}" -u "$REGISTRY_USERNAME" --password-stdin
+    fi
 
     IMAGE_REPO="{{ registry }}/{{ registry_path }}/myth$image"
     {{ container_runtime }} push "${IMAGE_REPO}:${version}-${timestamp}"
@@ -82,3 +85,7 @@ rebuild-all:
             just rebuild-image "$IMAGE" "$VERSION" "$TIMESTAMP"
         done
     done
+
+    if {{ container_runtime }} login --get-login "{{ registry }}"; then
+        {{ container_runtime }} logout "{{ registry }}"
+    fi

@@ -8,7 +8,7 @@ images := "backend frontend"
 default:
     @just --list
 
-image-needs-updates: $image $version
+image-needs-updates $image $version:
     #!/usr/bin/env bash
     set -euo pipefail
 
@@ -30,7 +30,7 @@ image-needs-updates: $image $version
         exit 0
     fi
 
-build-image: $image $version $timestamp
+build-image $image $version $timestamp:
     #!/usr/bin/env bash
     set -euo pipefail
 
@@ -48,7 +48,7 @@ build-image: $image $version $timestamp
     {{ container_runtime }} build "$BUILD_ARGS" -f "$image/Dockerfile" -t "$IMAGE_REF" "$image"
     {{ container_runtime }} tag "$IMAGE_REF" "{{ registry }}/myth$image:$version"
 
-push-image: $image $version $timestamp
+push-image $image $version $timestamp:
     #!/usr/bin/env bash
     set -euo pipefail
 
@@ -60,7 +60,7 @@ push-image: $image $version $timestamp
     {{ container_runtime }} push "${IMAGE_REPO}:${version}-${timestamp}"
     {{ container_runtime }} push "${IMAGE_REPO}:${version}"
 
-rebuild-image: $image $version $timestamp
+rebuild-image $image $version $timestamp:
     #!/usr/bin/env bash
 
     if just image-needs-updates "$image" "$version"; then
